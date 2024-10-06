@@ -1,0 +1,11 @@
+/* frontend/src/App.css */
+.App {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  video {
+    border: 2px solid #ccc;
+    border-radius: 8px;
+  }
+  
