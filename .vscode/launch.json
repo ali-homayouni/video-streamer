@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Launch Package",
+        "type": "go",
+        "request": "launch",
+        "mode": "auto",
+        "program": "${workspaceFolder}/backend",
+        "args": [],
+        "env": {},
+        "buildFlags": "",
+        "dlvToolPath": "${env:GOPATH}/bin/dlv"  // Adjust this if Delve is installed elsewhere
+      }
+    ]
+  }
+  

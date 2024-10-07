@@ -12,13 +12,23 @@ import (
     "github.com/gorilla/handlers"
 )
 
-
 func main() {
+    // Create a folder named "video" if it doesn't exist
+    createVideoFolder()
+
+    videoFilePath := getVideoPath()
+    subtitleFilePath := getSubtitlePath()
+
     mux := http.NewServeMux()
 
     // Serve video and subtitles from API
-    mux.HandleFunc("/video", videoHandler)
-    mux.HandleFunc("/sub", subtitleHandler)
+    // Pass the video path as a parameter to the videoHandler
+    mux.HandleFunc("/video", func(w http.ResponseWriter, r *http.Request) {
+        videoHandler(w, r, videoFilePath)
+    })
+    mux.HandleFunc("/sub", func(w http.ResponseWriter, r *http.Request) {
+        subtitleHandler(w, r, subtitleFilePath)
+    })
     mux.HandleFunc("/favicon.ico", faviconHandler)
 
     // Get the current working directory
@@ -47,23 +57,71 @@ func main() {
     log.Fatal(http.ListenAndServe(":80", handlers.CORS(origins, headers, methods)(mux)))
 }
 
+func createVideoFolder() {
+    // Create a folder named "video" if it doesn't exist
+    if _, err := os.Stat("video"); os.IsNotExist(err) {
+        os.Mkdir("video", 0755)
+    }
+}
+
+func getVideoPath() string {
+    // read all videos in the video folder
+    files, err := os.ReadDir("video")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // ask the user to select a video
+    fmt.Println("Select a video to stream:")
+    for i, file := range files {
+        fmt.Printf("%d: %s\n", i+1, file.Name())
+    }
+
+    var index int
+    fmt.Scanln(&index)
+
+    // return the selected video path
+    fmt.Printf("Selected video: %s\n", files[index-1].Name())
+    return filepath.Join("video", files[index-1].Name())
+}
+
+func getSubtitlePath() string {
+    // read all subtitles in the video folder
+    files, err := os.ReadDir("video")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // ask the user to select a subtitle
+    fmt.Println("Select a subtitle to stream:")
+    for i, file := range files {
+        fmt.Printf("%d: %s\n", i+1, file.Name())
+    }
+
+    var index int
+    fmt.Scanln(&index)
+
+    // return the selected subtitle path
+    fmt.Printf("Selected subtitle: %s\n", files[index-1].Name())
+    return filepath.Join("video", files[index-1].Name())
+}
+
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
     http.ServeFile(w, r, "./favicon.ico") // Adjust path as necessary
 }
 
-func subtitleHandler(w http.ResponseWriter, r *http.Request) {
+func subtitleHandler(w http.ResponseWriter, r *http.Request, subtitlePath string) {
     log.Printf("Received request for subtitles from: %s", r.RemoteAddr)
 
-    subtitlePath := "video/The.Greatest.Hits.2024.vtt" // Change this to your subtitle file path
     w.Header().Set("Content-Type", "text/vtt")
     http.ServeFile(w, r, subtitlePath)
 
     log.Println("Completed serving subtitles")
 }
 
-func videoHandler(w http.ResponseWriter, r *http.Request) {
+func videoHandler(w http.ResponseWriter, r *http.Request, videoPath string) {
     // Path to the video file
-    videoPath := "video/The.Greatest.Hits.2024.mkv"
+    // videoPath := "video/The.Greatest.Hits.2024.mkv"
 
     log.Printf("Attempting to stream video: %s", videoPath)
 
