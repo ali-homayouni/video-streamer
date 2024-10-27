@@ -7,6 +7,7 @@ import (
     "mime"
     "net/http"
     "os"
+    "net"
     "path/filepath"
     "strconv"
     "github.com/gorilla/handlers"
@@ -53,8 +54,33 @@ func main() {
     methods := handlers.AllowedMethods([]string{"GET", "HEAD", "OPTIONS"})
     origins := handlers.AllowedOrigins([]string{"*"}) // Allow all origins for testing
 
+    ip, err := getLocalIP()
+    if err != nil {
+        log.Fatal(err)
+
+    }
+    fmt.Println("Server started at", ip+":80")
+
     fmt.Println("Server started at :80")
     log.Fatal(http.ListenAndServe(":80", handlers.CORS(origins, headers, methods)(mux)))
+}
+
+func getLocalIP() (string, error) {
+    // Get a list of all network interfaces
+    addrs, err := net.InterfaceAddrs()
+    if err != nil {
+        return "", err
+    }
+
+    // Iterate over the addresses and find an IP address that isn't loopback
+    for _, addr := range addrs {
+        if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+            if ipNet.IP.To4() != nil {
+                return ipNet.IP.String(), nil
+            }
+        }
+    }
+    return "", fmt.Errorf("no non-loopback IP address found")
 }
 
 func createVideoFolder() {
